@@ -6,7 +6,7 @@ services:
     container_name: ollama
     restart: always
     volumes:
-      - /var/lib/ollama:/root/.ollama
+      - /var/lib/local_llm/ollama:/root/.ollama
     deploy:
       resources:
         reservations:
@@ -19,11 +19,14 @@ services:
     container_name: open-webui
     restart: always
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
+      OLLAMA_BASE_URL: http://ollama:11434
+      ENABLE_WEBSOCKET_SUPPORT: true
+      WEBSOCKET_MANAGER: redis
+      WEBSOCKET_REDIS_URL: "redis://redis:6379/1"
     ports:
       - "3000:8080"
     volumes:
-      - "/var/lib/open-webui:/app/backend/data"
+      - "/var/lib/local_llm/open-webui:/app/backend/data"
     deploy:
       resources:
         reservations:
@@ -31,3 +34,20 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+  searxng:
+    # remember to enable json in format.
+    image: docker.io/searxng/searxng:latest
+    container_name: searxng
+    restart: always
+    volumes:
+      - /etc/local_llm/searxng:/etc/searxng
+    environment:
+      BASE_URL: "http://searxng:8080/"
+      SEARXNG_BIND_ADDRESS: 0.0.0.0
+      SEARXNG_PORT: 8080
+      INSTANCE_NAME: "searxng"
+      SEARXNG_REDIS_URL: "redis://redis:6379/0"
+  redis:
+    image: docker.io/valkey/valkey:latest
+    container_name: redis
+    restart: always
