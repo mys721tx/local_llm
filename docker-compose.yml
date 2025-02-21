@@ -16,6 +16,10 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:cuda
     container_name: open-webui
+    depends_on:
+      - ollama
+      - redis
+      - searxng
     restart: always
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
@@ -37,6 +41,8 @@ services:
     # remember to enable json in format.
     image: docker.io/searxng/searxng:latest
     container_name: searxng
+    depends_on:
+      - redis
     restart: always
     volumes:
       - /etc/local_llm/searxng:/etc/searxng
