@@ -21,6 +21,7 @@ services:
       - redis
       - searxng
       - tika
+      - litellm
     restart: always
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
@@ -63,3 +64,11 @@ services:
     ports:
       - "9998:9998"
     restart: always
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    container_name: litellm
+    restart: always
+    volumes:
+      - /etc/local_llm/litellm/litellm.yaml:/app/litellm.yaml
+    command: ["--config", "/app/litellm.yaml", "--port", "4000"]
+    env_file: /etc/local_llm/litellm/.env
