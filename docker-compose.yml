@@ -18,7 +18,7 @@ services:
     container_name: open-webui
     depends_on:
       - ollama
-      - redis
+      - redis-open-webui
       - searxng
       - docling
       - litellm
@@ -28,7 +28,7 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
       ENABLE_WEBSOCKET_SUPPORT: true
       WEBSOCKET_MANAGER: redis
-      WEBSOCKET_REDIS_URL: "redis://redis:6379/1"
+      WEBSOCKET_REDIS_URL: redis://redis-open-webui:6379/0
       CONTENT_EXTRACTION_ENGINE: docling
       VECTOR_STORE: qdrant
       QDRANT_URL: http://qdrant:6333
@@ -43,12 +43,15 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+  redis-open-webui:
+    image: docker.io/valkey/valkey:latest
+    container_name: redis-open-webui
+    restart: always
   searxng:
-    # remember to enable json in format.
     image: docker.io/searxng/searxng:latest
     container_name: searxng
     depends_on:
-      - redis
+      - redis-searxng
     restart: always
     volumes:
       - /etc/local_llm/searxng:/etc/searxng
@@ -57,10 +60,10 @@ services:
       SEARXNG_BIND_ADDRESS: 0.0.0.0
       SEARXNG_PORT: 8080
       INSTANCE_NAME: "searxng"
-      SEARXNG_REDIS_URL: "redis://redis:6379/0"
-  redis:
+      SEARXNG_REDIS_URL: "redis://redis-searxng:6379/0"
+  redis-searxng:
     image: docker.io/valkey/valkey:latest
-    container_name: redis
+    container_name: redis-searxng
     restart: always
   docling:
     image: quay.io/docling-project/docling-serve:latest
@@ -81,6 +84,15 @@ services:
       - /etc/local_llm/litellm/litellm.yaml:/app/litellm.yaml
     command: ["--config", "/app/litellm.yaml", "--port", "4000"]
     env_file: /etc/local_llm/litellm/.env
+    environment:
+      REDIS_HOST: redis-litellm
+      REDIS_PORT: 6379
+    depends_on:
+      - redis-litellm
+  redis-litellm:
+    image: docker.io/valkey/valkey:latest
+    container_name: redis-litellm
+    restart: always
   qdrant:
     image: docker.io/qdrant/qdrant:latest
     container_name: qdrant
