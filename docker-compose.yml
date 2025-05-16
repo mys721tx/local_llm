@@ -22,6 +22,7 @@ services:
       - searxng
       - docling
       - litellm
+      - qdrant
     restart: always
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
@@ -29,6 +30,8 @@ services:
       WEBSOCKET_MANAGER: redis
       WEBSOCKET_REDIS_URL: "redis://redis:6379/1"
       CONTENT_EXTRACTION_ENGINE: docling
+      VECTOR_STORE: qdrant
+      QDRANT_URL: http://qdrant:6333
     ports:
       - "3000:8080"
     volumes:
@@ -78,3 +81,9 @@ services:
       - /etc/local_llm/litellm/litellm.yaml:/app/litellm.yaml
     command: ["--config", "/app/litellm.yaml", "--port", "4000"]
     env_file: /etc/local_llm/litellm/.env
+  qdrant:
+    image: docker.io/qdrant/qdrant:latest
+    container_name: qdrant
+    restart: always
+    volumes:
+      - /var/lib/local_llm/qdrant:/qdrant/storage
