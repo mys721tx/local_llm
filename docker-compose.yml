@@ -13,6 +13,16 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+  nginx:
+    image: docker.io/library/nginx:latest
+    container_name: nginx
+    depends_on:
+      - open-webui
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - /etc/local_llm/nginx:/etc/nginx/conf.d
   open-webui:
     image: ghcr.io/open-webui/open-webui:cuda
     container_name: open-webui
@@ -32,8 +42,6 @@ services:
       CONTENT_EXTRACTION_ENGINE: docling
       VECTOR_STORE: qdrant
       QDRANT_URL: http://qdrant:6333
-    ports:
-      - "3000:8080"
     volumes:
       - "/var/lib/local_llm/open-webui:/app/backend/data"
     deploy:
