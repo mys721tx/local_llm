@@ -21,6 +21,7 @@ services:
     restart: always
     ports:
       - "3000:3000"
+      - "3001:3001"
     volumes:
       - /etc/local_llm/nginx:/etc/nginx/conf.d
   open-webui:
@@ -29,9 +30,7 @@ services:
     depends_on:
       - ollama
       - redis-open-webui
-      - searxng
       - docling
-      - litellm
       - qdrant
     restart: always
     environment:
@@ -55,24 +54,6 @@ services:
     image: docker.io/valkey/valkey:latest
     container_name: redis-open-webui
     restart: always
-  searxng:
-    image: docker.io/searxng/searxng:latest
-    container_name: searxng
-    depends_on:
-      - redis-searxng
-    restart: always
-    volumes:
-      - /etc/local_llm/searxng:/etc/searxng
-    environment:
-      BASE_URL: "http://searxng:8080/"
-      SEARXNG_BIND_ADDRESS: 0.0.0.0
-      SEARXNG_PORT: 8080
-      INSTANCE_NAME: "searxng"
-      SEARXNG_REDIS_URL: "redis://redis-searxng:6379/0"
-  redis-searxng:
-    image: docker.io/valkey/valkey:latest
-    container_name: redis-searxng
-    restart: always
   docling:
     image: quay.io/docling-project/docling-serve:latest
     container_name: docling
@@ -84,26 +65,23 @@ services:
           devices:
             - capabilities: ["gpu"]
     restart: always
-  litellm:
-    image: ghcr.io/berriai/litellm:main-stable
-    container_name: litellm
-    restart: always
-    volumes:
-      - /etc/local_llm/litellm/litellm.yaml:/app/litellm.yaml
-    command: ["--config", "/app/litellm.yaml", "--port", "4000"]
-    env_file: /etc/local_llm/litellm/.env
-    environment:
-      REDIS_HOST: redis-litellm
-      REDIS_PORT: 6379
-    depends_on:
-      - redis-litellm
-  redis-litellm:
-    image: docker.io/valkey/valkey:latest
-    container_name: redis-litellm
-    restart: always
   qdrant:
     image: docker.io/qdrant/qdrant:latest
     container_name: qdrant
     restart: always
     volumes:
       - /var/lib/local_llm/qdrant:/qdrant/storage
+  gpt-researcher:
+    image: ghcr.io/assafelovic/gpt-researcher:latest
+    container_name: gpt-researcher
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      TAVILY_API_KEY: ${TAVILY_API_KEY}
+      LOGGING_LEVEL: INFO
+      RETRIEVER: tavily
+    user: root
+    volumes:
+      - /var/lib/local_llm/gpt-researcher/my-docs:/usr/src/app/my-docs:rw
+      - /var/lib/local_llm/gpt-researcher/outputs:/usr/src/app/outputs:rw
+      - /var/lib/local_llm/gpt-researcher/logs:/usr/src/app/logs:rw
+    restart: always
