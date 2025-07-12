@@ -21,7 +21,6 @@ services:
     restart: always
     ports:
       - "3000:3000"
-      - "3001:3001"
       - "5001:5001"
     volumes:
       - /etc/local_llm/nginx:/etc/nginx/conf.d
@@ -73,17 +72,3 @@ services:
     restart: always
     volumes:
       - /var/lib/local_llm/qdrant:/qdrant/storage
-  gpt-researcher:
-    image: ghcr.io/assafelovic/gpt-researcher:latest
-    container_name: gpt-researcher
-    environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      TAVILY_API_KEY: ${TAVILY_API_KEY}
-      LOGGING_LEVEL: INFO
-      RETRIEVER: tavily
-    user: root
-    volumes:
-      - /var/lib/local_llm/gpt-researcher/my-docs:/usr/src/app/my-docs:rw
-      - /var/lib/local_llm/gpt-researcher/outputs:/usr/src/app/outputs:rw
-      - /var/lib/local_llm/gpt-researcher/logs:/usr/src/app/logs:rw
-    restart: always
